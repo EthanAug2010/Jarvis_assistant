@@ -478,9 +478,12 @@ footer { text-align:center;color:#51788b;font-size:10px;margin-top:20px;letter-s
       if (!result.ok) throw new Error("Unexpected response");
 
       statusText.textContent = "JARVIS backend connected!";
-    } catch {
-      statusText.textContent =
-        "Connection failed. Check the URL, server status, and network.";
+    } catch (error) {
+  console.error("JARVIS connection test failed:", error);
+
+  statusText.textContent =
+    "Connection failed: " +
+    (error?.message || String(error));
     }
   });
 </script>
