@@ -1,0 +1,488 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#030914">
+<title>JARVIS AI</title>
+
+<style>
+:root {
+  --cyan:#35eaff;
+  --blue:#087fa7;
+  --bg:#030914;
+  --panel:#081827;
+  --muted:#7ca4b7;
+}
+* { box-sizing:border-box; }
+body {
+  margin:0;
+  background:radial-gradient(ellipse at 50% 28%,#10324b 0%,#06121f 38%,var(--bg) 78%);
+  color:#e3fbff;
+  font-family:Arial,sans-serif;
+  min-height:100vh;
+}
+.app { max-width:520px; margin:auto; padding:20px 16px 28px; }
+header { display:flex; justify-content:space-between; align-items:center; }
+.brand { letter-spacing:5px; font-size:24px; color:var(--cyan); }
+.sub { color:var(--muted); font-size:10px; letter-spacing:2px; margin-top:6px; }
+.status { font-size:10px; color:var(--cyan); }
+.hud {
+  height:310px; display:grid; place-items:center; position:relative;
+}
+.ring {
+  position:absolute; border:1px solid #35eaff55; border-radius:50%;
+  box-shadow:0 0 22px #00cfff10,inset 0 0 22px #00cfff10;
+}
+.r1 { width:260px;height:260px;border-style:dashed;animation:spin 24s linear infinite; }
+.r2 { width:218px;height:218px;border-color:#35eaff99;animation:spin 15s linear infinite reverse; }
+.r3 { width:175px;height:175px;border-width:2px; }
+.core {
+  width:135px;height:135px;border-radius:50%;
+  display:grid;place-items:center;
+  background:radial-gradient(circle,#147d9b55,#071a2b 70%);
+  border:2px solid var(--cyan);
+  box-shadow:0 0 25px #00dfff66,inset 0 0 30px #00dfff22;
+  color:var(--cyan);font-size:30px;font-weight:bold;
+  cursor:pointer; z-index:2;
+}
+.core.listening { animation:pulse 1s infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+@keyframes pulse {
+  50% { box-shadow:0 0 45px #00eaffcc,inset 0 0 30px #00eaff66; }
+}
+.meter { display:flex;gap:5px;justify-content:center;height:28px;align-items:center; }
+.meter i { width:3px;height:8px;background:var(--cyan);border-radius:4px; }
+.active .meter i { animation:wave .6s infinite alternate; }
+.meter i:nth-child(2n) { animation-delay:.2s; }
+.meter i:nth-child(3n) { animation-delay:.4s; }
+@keyframes wave { to { height:26px; } }
+.center { text-align:center; }
+#state { color:var(--cyan);letter-spacing:3px;font-size:12px;margin:8px 0; }
+#hint { color:var(--muted);font-size:12px;line-height:1.6; }
+.panel {
+  background:linear-gradient(145deg,#0b2030dd,#06121de8);
+  border:1px solid #35eaff33;border-radius:15px;padding:15px;margin-top:14px;
+}
+.panel h3 { font-size:11px;letter-spacing:3px;color:var(--cyan);margin:0 0 12px; }
+#log { height:160px;overflow:auto;font-size:13px;line-height:1.55; }
+.msg { margin:10px 0;white-space:pre-wrap;overflow-wrap:anywhere; }
+.user { color:#fff; }
+.bot { color:#7ceeff; }
+form { display:flex;gap:8px;margin-top:12px; }
+input {
+  flex:1;min-width:0;background:#020b14;color:white;
+  border:1px solid #35eaff55;border-radius:9px;padding:12px;font-size:14px;
+}
+button {
+  border:1px solid #35eaff88;background:#08354a;color:var(--cyan);
+  border-radius:9px;padding:12px;font-weight:bold;cursor:pointer;
+}
+button:active { background:#12627c; }
+.actions { display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px; }
+.actions button { font-size:11px; }
+footer { text-align:center;color:#51788b;font-size:10px;margin-top:20px;letter-spacing:2px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <div class="brand">J.A.R.V.I.S</div>
+      <div class="sub">PERSONAL AI SYSTEM</div>
+    </div>
+    <div class="status" id="online">● STANDBY</div>
+  </header>
+
+  <section class="hud">
+    <div class="ring r1"></div>
+    <div class="ring r2"></div>
+    <div class="ring r3"></div>
+    <button class="core" id="mic" aria-label="Start voice input">J</button>
+  </section>
+
+  <div class="center">
+    <div class="meter" id="meter">
+      <i></i><i></i><i></i><i></i><i></i>
+      <i></i><i></i><i></i><i></i><i></i><i></i>
+    </div>
+    <div id="state">SYSTEM READY</div>
+    <div id="hint">Tap the core and speak a command.</div>
+  </div>
+
+  <div class="panel">
+    <h3>COMMAND CONSOLE</h3>
+    <div id="log" aria-live="polite">
+      <div class="msg bot">JARVIS: Good evening. Systems are ready. How may I assist you?</div>
+    </div>
+    <form id="form">
+      <input id="input" placeholder="Enter a command..." maxlength="1000" autocomplete="off">
+      <button type="submit">SEND</button>
+    </form>
+    <div class="actions">
+      <button id="voice">VOICE: ON</button>
+      <button id="clear">CLEAR CONSOLE</button>
+      <button id="youtube">OPEN YOUTUBE</button>
+      <button id="maps">OPEN MAPS</button>
+    </div>
+  </div>
+  <footer>JARVIS AI · ALL SYSTEMS NOMINAL</footer>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  // Deploy your own protected backend and put its HTTPS URL here.
+  // Expected POST response: {"answer":"..."}
+  const API_URL = "https://YOUR_BACKEND_HOST/ask";
+
+  const $ = id => document.getElementById(id);
+  const log = $("log");
+  const mic = $("mic");
+  const state = $("state");
+  const hint = $("hint");
+  const online = $("online");
+  const meter = $("meter");
+
+  let voiceEnabled = true;
+  let busy = false;
+  let lastRequest = 0;
+  let britishVoice = null;
+
+  function setState(text) { state.textContent = text; }
+
+  function addMessage(who, text) {
+    const el = document.createElement("div");
+    el.className = "msg " + who;
+    el.textContent = (who === "user" ? "YOU: " : "JARVIS: ") + text;
+    log.appendChild(el);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function loadVoices() {
+    if (!("speechSynthesis" in window)) return;
+    const voices = speechSynthesis.getVoices();
+    britishVoice = voices.find(v =>
+      /^en-GB$/i.test(v.lang) &&
+      /male|daniel|george|arthur/i.test(v.name)
+    ) || voices.find(v => /^en-GB$/i.test(v.lang)) || null;
+  }
+
+  if ("speechSynthesis" in window) {
+    loadVoices();
+    speechSynthesis.onvoiceschanged = loadVoices;
+  }
+
+  function speak(text) {
+    if (!voiceEnabled || !("speechSynthesis" in window)) return;
+    speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "en-GB";
+    if (britishVoice) utterance.voice = britishVoice;
+    utterance.rate = 0.92;
+    utterance.pitch = 0.85;
+    speechSynthesis.speak(utterance);
+  }
+
+  function openWeb(url) {
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+
+  // These are explicit, limited commands, not unrestricted phone control.
+  function localCommand(text) {
+    const c = text.toLowerCase().trim();
+
+    if (/^(open )?youtube$|^open youtube$/.test(c)) {
+      openWeb("https://www.youtube.com/");
+      return "Opening YouTube.";
+    }
+    if (/^(open )?(google maps|maps)$/.test(c)) {
+      openWeb("https://maps.google.com/");
+      return "Opening Google Maps.";
+    }
+    if (/^(what time is it|tell me the time)$/.test(c)) {
+      return "The time is " + new Date().toLocaleTimeString("en-GB", {
+        hour: "2-digit", minute: "2-digit"
+      }) + ".";
+    }
+    if (/^(hello|hello jarvis|hi jarvis|hey jarvis)$/.test(c)) {
+      return "Good evening. I'm online and ready to assist.";
+    }
+    return null;
+  }
+
+  async function ask(text) {
+    text = text.trim();
+    if (!text || busy) return;
+
+    addMessage("user", text);
+    $("input").value = "";
+
+    const local = localCommand(text);
+    if (local) {
+      addMessage("bot", local);
+      speak(local);
+      setState("COMMAND COMPLETE");
+      return;
+    }
+
+    if (API_URL.includes("YOUR_BACKEND_HOST")) {
+      const warning = "The AI connection is not configured yet. Add your deployed HTTPS backend URL in the HTML.";
+      addMessage("bot", warning);
+      setState("BACKEND REQUIRED");
+      return;
+    }
+
+    // Client-side cooldown; the backend must enforce its own limits too.
+    const now = Date.now();
+    if (now - lastRequest < 2500) {
+      const wait = "Please wait a moment before sending another request.";
+      addMessage("bot", wait);
+      speak(wait);
+      return;
+    }
+
+    busy = true;
+    lastRequest = now;
+    online.textContent = "● THINKING";
+    setState("PROCESSING REQUEST");
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 25000);
+
+    try {
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text }),
+        signal: controller.signal
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        if (response.status === 429) {
+          throw new Error("Rate limit reached. Please wait before trying again.");
+        }
+        throw new Error(data.error || "AI service unavailable.");
+      }
+
+      const answer = String(data.answer || "I received an empty response.").slice(0, 5000);
+      addMessage("bot", answer);
+      speak(answer);
+      setState("RESPONSE RECEIVED");
+    } catch (error) {
+      const message = error.name === "AbortError"
+        ? "The request timed out. Please try again later."
+        : error.message || "Unable to connect to the AI.";
+      addMessage("bot", message);
+      setState("CONNECTION ISSUE");
+    } finally {
+      clearTimeout(timeout);
+      busy = false;
+      online.textContent = "● STANDBY";
+    }
+  }
+
+  $("form").addEventListener("submit", event => {
+    event.preventDefault();
+    ask($("input").value);
+  });
+
+  $("voice").addEventListener("click", () => {
+    voiceEnabled = !voiceEnabled;
+    $("voice").textContent = "VOICE: " + (voiceEnabled ? "ON" : "OFF");
+    if (!voiceEnabled && "speechSynthesis" in window) speechSynthesis.cancel();
+  });
+
+  $("clear").addEventListener("click", () => {
+    log.replaceChildren();
+    setState("SYSTEM READY");
+  });
+
+  $("youtube").addEventListener("click", () => ask("open youtube"));
+  $("maps").addEventListener("click", () => ask("open maps"));
+
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  function startListening() {
+    if (!SpeechRecognition) {
+      const text = "Voice recognition is unavailable in this browser. Try a browser that supports speech recognition, or type your command.";
+      hint.textContent = text;
+      addMessage("bot", text);
+      return;
+    }
+    if (busy) return;
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-GB";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    mic.classList.add("listening");
+    meter.classList.add("active");
+    setState("LISTENING");
+    hint.textContent = "Speak now...";
+
+    recognition.onresult = event => {
+      const transcript = event.results[0][0].transcript;
+      hint.textContent = "Heard: " + transcript;
+      ask(transcript);
+    };
+
+    recognition.onerror = event => {
+      hint.textContent = "Voice input: " + event.error + ". You can type instead.";
+      setState("VOICE UNAVAILABLE");
+    };
+
+    recognition.onend = () => {
+      mic.classList.remove("listening");
+      meter.classList.remove("active");
+      if (state.textContent === "LISTENING") setState("SYSTEM READY");
+    };
+
+    try { recognition.start(); }
+    catch {
+      hint.textContent = "Could not start the microphone. Try again.";
+      mic.classList.remove("listening");
+      meter.classList.remove("active");
+    }
+  }
+
+  mic.addEventListener("click", startListening);
+})();
+</script>
+  
+<style>
+  #apiSetupBtn {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 1001;
+    padding: 12px 16px;
+    border: 1px solid #00eaff;
+    border-radius: 10px;
+    background: #06131f;
+    color: #00eaff;
+    cursor: pointer;
+  }
+
+  #apiSetupPanel {
+    display: none;
+    position: fixed;
+    top: 65px;
+    right: 16px;
+    z-index: 1000;
+    width: min(320px, calc(100vw - 52px));
+    padding: 18px;
+    border: 1px solid #00eaff;
+    border-radius: 14px;
+    background: #06131f;
+    color: #e5fbff;
+    font-family: Arial, sans-serif;
+    box-shadow: 0 0 24px #00eaff33;
+  }
+
+  #apiSetupPanel input {
+    box-sizing: border-box;
+    width: 100%;
+    margin: 8px 0 12px;
+    padding: 11px;
+    border: 1px solid #087c94;
+    border-radius: 7px;
+    background: #0b2030;
+    color: white;
+  }
+
+  #apiSetupPanel button {
+    padding: 10px 12px;
+    margin: 3px 3px 3px 0;
+    border: 1px solid #00eaff;
+    border-radius: 7px;
+    background: #082b3a;
+    color: #00eaff;
+    cursor: pointer;
+  }
+</style>
+
+<button id="apiSetupBtn" type="button"
+        aria-expanded="false"
+        aria-controls="apiSetupPanel">
+  ⚙ API Setup
+</button>
+
+<div id="apiSetupPanel">
+  <h3>JARVIS Connection</h3>
+  <label for="jarvisBackend">Backend URL</label>
+  <input id="jarvisBackend"
+         type="url"
+         placeholder="https://your-service.onrender.com">
+
+  <button id="saveBackend" type="button">Save URL</button>
+  <button id="testBackend" type="button">Test Connection</button>
+  <p id="setupStatus" role="status" aria-live="polite">
+    Your OpenAI key stays on your secure backend.
+  </p>
+</div>
+
+<script>
+  const setupBtn = document.getElementById("apiSetupBtn");
+  const setupPanel = document.getElementById("apiSetupPanel");
+  const backendInput = document.getElementById("jarvisBackend");
+  const statusText = document.getElementById("setupStatus");
+
+  // Load only the backend URL, never an API secret.
+  backendInput.value = localStorage.getItem("jarvisBackendUrl") || "";
+
+  setupBtn.addEventListener("click", () => {
+    const opening = setupPanel.style.display !== "block";
+    setupPanel.style.display = opening ? "block" : "none";
+    setupBtn.setAttribute("aria-expanded", String(opening));
+  });
+
+  document.getElementById("saveBackend").addEventListener("click", () => {
+    try {
+      const url = new URL(backendInput.value.trim());
+
+      if (url.protocol !== "https:" &&
+          url.hostname !== "localhost" &&
+          url.hostname !== "127.0.0.1") {
+        throw new Error("Use a secure HTTPS backend URL.");
+      }
+
+      localStorage.setItem("jarvisBackendUrl", url.origin);
+      statusText.textContent = "Backend URL saved.";
+    } catch {
+      statusText.textContent = "Enter a valid HTTPS backend URL.";
+    }
+  });
+
+  document.getElementById("testBackend").addEventListener("click", async () => {
+    try {
+      const url = new URL(backendInput.value.trim());
+
+      if (url.protocol !== "https:" &&
+          url.hostname !== "localhost" &&
+          url.hostname !== "127.0.0.1") {
+        throw new Error("HTTPS required");
+      }
+
+      statusText.textContent = "Testing connection...";
+      const response = await fetch(url.origin + "/health");
+      if (!response.ok) throw new Error("Server error");
+
+      const result = await response.json();
+      if (!result.ok) throw new Error("Unexpected response");
+
+      statusText.textContent = "JARVIS backend connected!";
+    } catch {
+      statusText.textContent =
+        "Connection failed. Check the URL, server status, and network.";
+    }
+  });
+</script>
+</body>
+</html>
